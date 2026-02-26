@@ -3,125 +3,220 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SnapText | OCR Pro & Rapide</title>
+    <title>SnapText | OCR Pro Rapide & Illimité</title>
     
     <meta name="google-site-verification" content="yN4zDHUSHdjMwlhF_RdoxG3l2erKbrct6PKDDzRN-ig" />
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; scroll-behavior: smooth; }
+        .animate-shimmer {
+            background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 50%, #3b82f6 100%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .toast-in { animation: slideUp 0.3s ease-out forwards; }
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
-<body class="text-slate-900 min-h-screen">
+<body class="text-slate-900 min-h-screen relative overflow-x-hidden">
+
+    <div id="toast-container" class="fixed bottom-5 right-5 z-[200] flex flex-col gap-2"></div>
 
     <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex justify-between items-center">
         <div class="text-2xl font-extrabold text-blue-600 tracking-tighter italic">SnapText.</div>
-        <div id="badge" class="bg-slate-900 text-white text-[10px] font-bold px-4 py-2 rounded-full uppercase tracking-widest">
+        <div id="badge" class="bg-slate-900 text-white text-[10px] font-bold px-4 py-2 rounded-full uppercase tracking-widest shadow-lg transition-all duration-500">
             Scans : <span id="count">10</span>/10
         </div>
     </nav>
 
-    <main class="max-w-3xl mx-auto px-6 py-12">
-        <div class="text-center mb-10">
-            <h1 class="text-5xl font-black mb-4 tracking-tight">L'image en <span class="text-blue-600 underline decoration-blue-200">texte</span>.</h1>
-            <p class="text-slate-500 font-medium italic text-sm">Copiez n'importe quel texte depuis une capture d'écran.</p>
+    <main class="max-w-4xl mx-auto px-6 py-12">
+        <div class="text-center mb-16">
+            <h1 class="text-5xl md:text-6xl font-black mb-6 tracking-tight">L'image en <span class="text-blue-600 underline decoration-blue-200">texte</span>.</h1>
+            <p class="text-slate-500 font-medium text-lg max-w-xl mx-auto italic">Extraire le texte de vos images n'a jamais été aussi simple et rapide.</p>
         </div>
 
-        <div onclick="document.getElementById('file').click()" class="bg-white border-4 border-dashed border-slate-200 rounded-[3rem] p-12 text-center hover:border-blue-500 transition-all cursor-pointer shadow-2xl mb-10 group">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20">
+            <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm text-center">
+                <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 font-black">1</div>
+                <h3 class="font-bold text-sm mb-1 uppercase">Upload</h3>
+                <p class="text-slate-400 text-[11px]">Choisissez votre image ou capture d'écran.</p>
+            </div>
+            <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm text-center">
+                <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 font-black">2</div>
+                <h3 class="font-bold text-sm mb-1 uppercase">Analyse</h3>
+                <p class="text-slate-400 text-[11px]">L'IA traite les caractères en quelques secondes.</p>
+            </div>
+            <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm text-center">
+                <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 font-black">3</div>
+                <h3 class="font-bold text-sm mb-1 uppercase">Copie</h3>
+                <p class="text-slate-400 text-[11px]">Récupérez votre texte proprement.</p>
+            </div>
+        </div>
+
+        <div onclick="document.getElementById('file').click()" class="bg-white border-4 border-dashed border-slate-200 rounded-[3.5rem] p-16 text-center hover:border-blue-500 transition-all cursor-pointer shadow-2xl mb-12 group">
             <input type="file" id="file" class="hidden" accept="image/*" onchange="processImage(this.files[0])">
-            <div class="text-5xl mb-4 group-hover:rotate-12 transition-transform">📄</div>
-            <h2 class="text-xl font-bold uppercase tracking-tight">Sélectionner une image</h2>
-            <div id="loader" class="hidden mt-6">
-                <div class="h-1.5 w-32 bg-blue-100 mx-auto rounded-full overflow-hidden">
-                    <div class="h-full bg-blue-600 animate-[pulse_2s_infinite] w-full"></div>
+            <div class="text-7xl mb-6 group-hover:scale-110 transition-transform">📸</div>
+            <h2 class="text-2xl font-black uppercase tracking-tight">Cliquer pour scanner</h2>
+            <div id="loader" class="hidden mt-8">
+                <div class="h-2 w-48 bg-blue-100 mx-auto rounded-full overflow-hidden">
+                    <div class="h-full animate-shimmer w-full"></div>
                 </div>
-                <p class="text-[10px] font-black text-blue-600 mt-2 uppercase tracking-widest">Analyse IA en cours...</p>
+                <p class="text-[10px] font-black text-blue-600 mt-3 uppercase tracking-widest">Analyse IA en cours...</p>
             </div>
         </div>
 
-        <div id="result-box" class="hidden bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-2xl mb-10 overflow-hidden">
-            <div class="flex justify-between items-center mb-4 text-[10px] font-black uppercase text-slate-400">
-                <span>Résultat de l'extraction</span>
-                <button onclick="copyText()" id="copy-btn" class="bg-blue-600 text-white px-6 py-2 rounded-xl hover:scale-105 transition-all">Copier</button>
+        <div id="result-box" class="hidden bg-white rounded-[3rem] border border-slate-100 p-8 shadow-2xl mb-24 animate-in fade-in zoom-in duration-300">
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest italic">Texte détecté</span>
+                <button onclick="copyText()" id="copy-btn" class="bg-blue-600 text-white px-8 py-2 rounded-2xl hover:bg-blue-700 active:scale-95 transition-all font-bold text-xs uppercase shadow-lg">Copier</button>
             </div>
-            <textarea id="output" class="w-full h-64 bg-slate-50 rounded-2xl p-6 text-slate-700 border-none outline-none text-md"></textarea>
+            <textarea id="output" class="w-full h-72 bg-slate-50 rounded-[1.5rem] p-6 text-slate-700 border-none outline-none text-md leading-relaxed"></textarea>
         </div>
 
-        <div class="bg-blue-600 text-white rounded-[3.5rem] p-10 text-center shadow-xl relative overflow-hidden">
-            <div class="relative z-10">
-                <h3 class="text-2xl font-black mb-2 italic uppercase">Accès Illimité</h3>
-                <p class="text-blue-100 text-[10px] mb-8 font-bold tracking-[0.2em]">PAIEMENT USDT (TRC-20)</p>
-                <div class="bg-white/10 backdrop-blur-md p-4 rounded-2xl mb-4 flex justify-between items-center border border-white/20">
-                    <code id="wallet" class="text-[11px] font-mono truncate mr-2 text-white">TN6Gn74xuXqPpWx3Qd2cyWiiqYVBYr2E6P</code>
-                    <button onclick="copyWallet()" class="bg-white text-blue-600 text-[10px] font-black px-4 py-2 rounded-lg shrink-0">COPIER</button>
-                </div>
-                <p class="text-[10px] opacity-70 font-medium">Envoyez la capture du transfert à : <br><strong class="text-white">Honoratdariel@gmail.com</strong></p>
+        <div class="text-center mb-12">
+            <h2 class="text-4xl font-black mb-2 italic uppercase">Plans & Tarifs</h2>
+            <p class="text-slate-400 text-sm">Débloquez la puissance totale de SnapText.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-24">
+            <div class="bg-white p-10 rounded-[3rem] border border-slate-200 shadow-sm">
+                <h4 class="font-black text-[10px] uppercase tracking-widest text-slate-400 mb-4">Gratuit</h4>
+                <div class="text-4xl font-black mb-6 italic">0€ <span class="text-sm font-medium text-slate-300 not-italic">/10 scans</span></div>
+                <ul class="text-sm space-y-4 mb-10">
+                    <li class="flex items-center text-slate-500 font-medium italic">✅ 10 Scans de bienvenue</li>
+                    <li class="flex items-center text-slate-500 font-medium italic">✅ IA Standard</li>
+                    <li class="flex items-center text-slate-300 line-through italic">❌ Accès illimité</li>
+                </ul>
+                <div class="w-full py-4 bg-slate-50 rounded-2xl text-slate-400 text-center font-bold text-[10px] uppercase">Plan Actuel</div>
+            </div>
+
+            <div class="bg-slate-900 p-10 rounded-[3rem] border-2 border-blue-600 shadow-2xl relative">
+                <div class="absolute top-6 right-6 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase italic">Best-Seller</div>
+                <h4 class="font-black text-[10px] uppercase tracking-widest text-blue-400 mb-4 font-bold">Premium</h4>
+                <div class="text-4xl font-black mb-6 italic text-white">5€ <span class="text-sm font-medium text-slate-500 not-italic">/à vie</span></div>
+                <ul class="text-sm space-y-4 mb-10">
+                    <li class="flex items-center text-white font-medium italic">✅ Scans illimités à vie</li>
+                    <li class="flex items-center text-white font-medium italic">✅ IA Prioritaire</li>
+                    <li class="flex items-center text-white font-medium italic">✅ Aucun abonnement</li>
+                </ul>
+                <a href="#payment-box" class="block w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-center font-black text-[10px] uppercase transition-all shadow-xl shadow-blue-900/40">Activer le mode PRO</a>
+            </div>
+        </div>
+
+        <div id="payment-box" class="bg-gradient-to-br from-blue-600 to-blue-800 text-white rounded-[4rem] p-12 text-center shadow-2xl relative overflow-hidden">
+            <h3 class="text-3xl font-black mb-2 italic uppercase">Accès PRO unique</h3>
+            <p class="text-blue-200 text-[10px] mb-10 font-black tracking-widest uppercase opacity-80">Paiement USDT (TRC-20)</p>
+            
+            <div class="bg-white/10 backdrop-blur-xl p-6 rounded-[2rem] mb-8 flex flex-col md:flex-row justify-between items-center border border-white/20">
+                <code class="text-[12px] font-mono font-bold mb-4 md:mb-0">TN6Gn74xuXqPpWx3Qd2cyWiiqYVBYr2E6P</code>
+                <button onclick="copyWallet()" class="bg-white text-blue-600 text-[10px] font-black px-8 py-3 rounded-xl hover:scale-105 transition-all uppercase shadow-xl">Copier</button>
+            </div>
+            
+            <div class="inline-block bg-black/20 px-8 py-4 rounded-2xl">
+                <p class="text-[11px] italic mb-1 uppercase font-bold opacity-70">Envoyez votre reçu ici :</p>
+                <a href="mailto:Honoratdariel@gmail.com" class="font-black text-sm underline">Honoratdariel@gmail.com</a>
             </div>
         </div>
     </main>
 
-    <div id="paywall" class="hidden fixed inset-0 bg-slate-900/90 backdrop-blur-xl z-[100] flex items-center justify-center p-6 text-center">
-        <div class="bg-white rounded-[3rem] p-12 shadow-2xl max-w-sm">
-            <div class="text-5xl mb-6">🔒</div>
-            <h2 class="text-3xl font-black mb-4">Limite atteinte</h2>
-            <p class="text-slate-500 mb-8 text-sm">Passez en mode PRO pour continuer à extraire vos textes sans limite.</p>
-            <button onclick="location.reload()" class="text-blue-600 font-bold uppercase text-xs">Fermer</button>
+    <footer class="py-12 text-center text-slate-300 text-[9px] font-bold uppercase tracking-[0.3em]">
+        &copy; 2026 SnapText - Développé par Dariel
+    </footer>
+
+    <div id="modal" class="hidden fixed inset-0 bg-slate-900/95 backdrop-blur-2xl z-[150] flex items-center justify-center p-6 text-center">
+        <div class="bg-white rounded-[3.5rem] p-12 shadow-2xl max-w-sm">
+            <div class="text-6xl mb-6 text-blue-600 animate-bounce">💎</div>
+            <h2 class="text-3xl font-black mb-4 italic tracking-tight">Limite atteinte</h2>
+            <p class="text-slate-500 mb-8 text-sm italic">Vous avez utilisé vos 10 scans gratuits. Passez en mode PRO pour continuer sans limites.</p>
+            <a href="#payment-box" onclick="closeModal()" class="block w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl mb-4">Voir l'offre PRO (5€)</a>
+            <button onclick="closeModal()" class="text-slate-300 font-bold uppercase text-[9px] hover:text-slate-500 transition-colors">Plus tard</button>
         </div>
     </div>
 
     <script>
-        let credits = localStorage.getItem('snap_credits') || 10;
+        // LOGIQUE DES CRÉDITS ET TOKEN PRO
+        let credits = localStorage.getItem('snap_credits') !== null ? parseInt(localStorage.getItem('snap_credits')) : 10;
         let isPro = localStorage.getItem('snap_isPro') === 'true';
 
-        if (new URLSearchParams(window.location.search).get('token') === 'DARIEL-PRO-2026') {
+        // DETECTION LIEN MAGIQUE D'ACTIVATION
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('token') === 'DARIEL-PRO-2026') {
             localStorage.setItem('snap_isPro', 'true');
             isPro = true;
+            // Nettoyer l'URL
+            window.history.replaceState({}, document.title, "/");
         }
 
         function updateUI() {
+            const badge = document.getElementById('badge');
+            const countLabel = document.getElementById('count');
             if (isPro) {
-                document.getElementById('badge').innerHTML = "✨ MODE PRO ACTIF";
-                document.getElementById('badge').classList.replace('bg-slate-900', 'bg-emerald-500');
+                badge.innerHTML = "✨ MODE PRO ACTIF";
+                badge.classList.replace('bg-slate-900', 'bg-emerald-500');
             } else {
-                document.getElementById('count').innerText = credits;
+                countLabel.innerText = credits;
             }
         }
         updateUI();
 
+        // NOTIFICATIONS TOAST
+        function showToast(msg) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `bg-emerald-500 text-white px-8 py-4 rounded-2xl shadow-2xl text-[10px] font-black uppercase tracking-widest toast-in italic border-b-4 border-emerald-700`;
+            toast.innerText = msg;
+            container.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
+        }
+
+        function openModal() { document.getElementById('modal').classList.remove('hidden'); }
+        function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+
+        // MOTEUR D'EXTRACTION
         async function processImage(file) {
-            if (!isPro && credits <= 0) {
-                document.getElementById('paywall').classList.remove('hidden');
-                return;
-            }
+            if (!isPro && credits <= 0) { openModal(); return; }
             if (!file) return;
-            document.getElementById('loader').classList.remove('hidden');
+
+            const loader = document.getElementById('loader');
+            const resultBox = document.getElementById('result-box');
+            const output = document.getElementById('output');
+
+            loader.classList.remove('hidden');
+            resultBox.classList.add('hidden');
+            
             try {
-                const result = await Tesseract.recognize(file, 'fra+eng');
-                document.getElementById('output').value = result.data.text;
-                document.getElementById('result-box').classList.remove('hidden');
+                const worker = await Tesseract.createWorker(['fra', 'eng']);
+                const { data: { text } } = await worker.recognize(file);
+                output.value = text;
+                resultBox.classList.remove('hidden');
+                await worker.terminate();
+
                 if (!isPro) {
                     credits--;
                     localStorage.setItem('snap_credits', credits);
                     updateUI();
                 }
+                showToast("Extraction terminée !");
             } catch (err) {
-                alert("Erreur lors de la lecture de l'image.");
+                alert("Oups ! Une erreur est survenue lors de l'analyse.");
             } finally {
-                document.getElementById('loader').classList.add('hidden');
+                loader.classList.add('hidden');
             }
         }
 
         function copyText() {
             navigator.clipboard.writeText(document.getElementById('output').value);
-            document.getElementById('copy-btn').innerText = "COPIÉ !";
-            setTimeout(() => { document.getElementById('copy-btn').innerText = "COPIER"; }, 2000);
+            showToast("Texte copié !");
         }
 
         function copyWallet() {
             navigator.clipboard.writeText("TN6Gn74xuXqPpWx3Qd2cyWiiqYVBYr2E6P");
-            alert("Adresse USDT copiée !");
+            showToast("Adresse copiée !");
         }
     </script>
 </body>
